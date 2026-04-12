@@ -1,0 +1,617 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>个人微博 · 简易时光机</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f9f7f3 0%, #f0ede8 100%);
+            font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 2rem 1rem;
+            color: #1e2a32;
+        }
+
+        /* 主容器 */
+        .weibo-container {
+            max-width: 680px;
+            margin: 0 auto;
+            background: rgba(255, 255, 245, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 235, 200, 0.5);
+            overflow: hidden;
+            padding: 1.8rem 1.5rem 2rem 1.5rem;
+            transition: all 0.2s;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+            .header h1 {
+                font-size: 2rem;
+                font-weight: 700;
+                background: linear-gradient(135deg, #e06c2e, #c4450c);
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                letter-spacing: -0.3px;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+
+                .header h1:before {
+                    content: "✍️";
+                    font-size: 1.8rem;
+                    background: none;
+                    -webkit-background-clip: unset;
+                    color: #e0682e;
+                }
+
+        .sub {
+            font-size: 0.8rem;
+            color: #8b7a66;
+            margin-top: 6px;
+            border-top: 1px solid #ffe0c0;
+            display: inline-block;
+            padding-top: 6px;
+        }
+
+        /* 发布区 */
+        .post-area {
+            background: #ffffffdd;
+            backdrop-filter: blur(8px);
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.2rem 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255,255,240,0.8);
+            border: 1px solid #fff2e4;
+        }
+
+        .post-input {
+            width: 100%;
+            border: none;
+            background: #fffbf5;
+            border-radius: 1.5rem;
+            padding: 0.9rem 1rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            border: 1px solid #ffe1c6;
+            transition: 0.2s;
+        }
+
+            .post-input:focus {
+                border-color: #ffa559;
+                box-shadow: 0 0 0 3px rgba(255, 165, 89, 0.2);
+                background: white;
+            }
+
+        .post-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 12px;
+            gap: 12px;
+        }
+
+        .char-counter {
+            font-size: 0.7rem;
+            color: #b59570;
+            background: #fff3e8;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+        }
+
+        .post-btn {
+            background: linear-gradient(100deg, #ff8c42, #ff6a2c);
+            border: none;
+            padding: 0.5rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+            .post-btn:hover {
+                transform: scale(0.96);
+                background: linear-gradient(100deg, #ff772e, #f75c1a);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            }
+
+        /* 微博列表标题 */
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 0 0.2rem 1rem 0.2rem;
+            border-bottom: 2px solid #ffe0c0;
+            padding-bottom: 0.5rem;
+        }
+
+            .feed-header h2 {
+                font-size: 1.3rem;
+                font-weight: 600;
+                color: #593c2c;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            font-size: 0.7rem;
+            color: #b68254;
+            cursor: pointer;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+            .clear-btn:hover {
+                background: #ffe2cd;
+                color: #b13e00;
+            }
+
+        /* 微博卡片列表 */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+            .timeline::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .timeline::-webkit-scrollbar-track {
+                background: #f0e3d8;
+                border-radius: 10px;
+            }
+
+            .timeline::-webkit-scrollbar-thumb {
+                background: #d9b48b;
+                border-radius: 10px;
+            }
+
+        /* 单条微博样式 */
+        .weibo-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem 1.2rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid #ffefdf;
+            transition: all 0.2s;
+            animation: fadeInUp 0.2s ease;
+        }
+
+            .weibo-card:hover {
+                border-color: #ffd6b3;
+                box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.1);
+            }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.6rem;
+        }
+
+        .avatar-mini {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(145deg, #ffcd94, #ffb265);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #422c1c;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #3b2a1f;
+        }
+
+        .timeago {
+            font-size: 0.65rem;
+            color: #b19b7a;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #d9b18c;
+            transition: 0.1s;
+            padding: 0 4px;
+            border-radius: 30px;
+        }
+
+            .delete-btn:hover {
+                color: #e6552e;
+                background: #fff0e6;
+            }
+
+        .weibo-content {
+            font-size: 0.95rem;
+            line-height: 1.45;
+            color: #2a241e;
+            word-break: break-word;
+            white-space: pre-wrap;
+            padding-left: 42px; /* 与头像对齐风格 */
+            margin-bottom: 0.5rem;
+        }
+
+        .weibo-stats {
+            display: flex;
+            gap: 1rem;
+            margin-left: 42px;
+            font-size: 0.7rem;
+            color: #b3977c;
+        }
+
+            .weibo-stats span {
+                cursor: default;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+        .empty-tip {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #b9a48b;
+            background: #fffaf5;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            border: 1px dashed #ffd9bc;
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 底部 */
+        .footer-tip {
+            margin-top: 1.8rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #cbb088;
+            border-top: 1px solid #fae1ca;
+            padding-top: 1rem;
+        }
+
+        @media (max-width: 550px) {
+            .weibo-container {
+                padding: 1.2rem;
+            }
+
+            .weibo-content {
+                padding-left: 0;
+                margin-top: 8px;
+            }
+
+            .weibo-stats {
+                margin-left: 0;
+            }
+
+            .card-header {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="weibo-container">
+        <div class="header">
+            <h1>个人微博 · 碎语集</h1>
+            <div class="sub">✎ 记录日常，自由发声</div>
+        </div>
+
+        <!-- 发布框 -->
+        <div class="post-area">
+            <textarea class="post-input" id="weiboInput" rows="2" placeholder="分享此刻想法… 轻松记录你的微博～" maxlength="280"></textarea>
+            <div class="post-actions">
+                <div class="char-counter"><span id="charCount">0</span>/280</div>
+                <button class="post-btn" id="publishBtn">✨ 发布微博</button>
+            </div>
+        </div>
+
+        <!-- 动态流头部 -->
+        <div class="feed-header">
+            <h2>
+                <span>📱 我的微博墙</span>
+                <span style="font-size: 0.7rem; background:#f8ede2; padding:2px 8px; border-radius:40px;" id="postCount">0</span>
+            </h2>
+            <button class="clear-btn" id="clearAllBtn">🗑️ 清空全部</button>
+        </div>
+
+        <!-- 微博列表容器 -->
+        <div class="timeline" id="timelineList">
+            <!-- 动态渲染js -->
+            <div class="empty-tip">✨ 还没有微博，发一条成为第一个博主吧 ✨</div>
+        </div>
+        <div class="footer-tip">
+            💡 每条微博都会保存到你的浏览器中 · 可删除或清空
+        </div>
+    </div>
+
+    <script>
+    // ---------- 简易微博核心逻辑 (localStorage 持久化) ----------
+    // 定义数据结构: 每条微博 { id, content, timestamp, nickname }
+    // 个人简易版默认显示用户名为“大帅哥”（符合个人介绍风格），但也可以自由修改，这里为了让体验有趣且统一，使用“大帅哥”作为博主名。
+    // 同时支持每条微博独立删除、全部清空。
+
+    const STORAGE_KEY = 'SimpleWeibo_App';
+    let weiboList = [];        // 存储微博对象数组
+
+    // DOM 元素
+    const timelineContainer = document.getElementById('timelineList');
+    const weiboInput = document.getElementById('weiboInput');
+    const publishBtn = document.getElementById('publishBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const charCountSpan = document.getElementById('charCount');
+    const postCountSpan = document.getElementById('postCount');
+
+    // 辅助函数: 相对时间展示 (简易版)
+    function timeAgo(timestamp) {
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - timestamp) / 1000);
+        if (diffSeconds < 10) return '刚刚';
+        if (diffSeconds < 60) return `${diffSeconds}秒前`;
+        const diffMins = Math.floor(diffSeconds / 60);
+        if (diffMins < 60) return `${diffMins}分钟前`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}小时前`;
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 7) return `${diffDays}天前`;
+        // 超过一周显示具体日期
+        const date = new Date(timestamp);
+        return `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    // 保存数据到 localStorage
+    function saveToLocal() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(weiboList));
+    }
+
+    // 加载初始数据
+    function loadFromLocal() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                weiboList = JSON.parse(stored);
+                // 保证每个条目都有正确字段
+                if (!Array.isArray(weiboList)) weiboList = [];
+                // 过滤掉不合格数据
+                weiboList = weiboList.filter(item => item && typeof item.content === 'string' && typeof item.id === 'number');
+            } catch(e) {
+                weiboList = [];
+            }
+        } else {
+            // 首次使用可以加两条范例微博（可选），但为了简洁，给两条友好的演示微博又不显得突兀
+            weiboList = [
+                {
+                    id: Date.now() + 1,
+                    content: "大家好，我是大帅哥！今天开启我的个人微博小世界✨ 在这里自由分享点滴~",
+                    timestamp: Date.now() - 3600000,
+                    nickname: "大帅哥"
+                },
+                {
+                    id: Date.now() + 2,
+                    content: "阳光正好，心情超棒😎 记录一下今日份帅气",
+                    timestamp: Date.now() - 1800000,
+                    nickname: "大帅哥"
+                }
+            ];
+            saveToLocal();
+        }
+        // 按照时间倒序排列 (最新的在前面)
+        weiboList.sort((a,b) => b.timestamp - a.timestamp);
+        renderTimeline();
+    }
+
+    // 渲染微博列表
+    function renderTimeline() {
+        if (!timelineContainer) return;
+        if (weiboList.length === 0) {
+            timelineContainer.innerHTML = `<div class="empty-tip">🍃 暂无微博，发一条开始记录吧～</div>`;
+            postCountSpan.innerText = '0';
+            return;
+        }
+        postCountSpan.innerText = weiboList.length;
+        let html = '';
+        for (let i = 0; i < weiboList.length; i++) {
+            const weibo = weiboList[i];
+            // 安全处理内容换行
+            const contentText = escapeHtml(weibo.content);
+            const timeText = timeAgo(weibo.timestamp);
+            // 使用大帅哥头像标识🐱‍🏍
+            html += `
+                <div class="weibo-card" data-id="${weibo.id}">
+                    <div class="card-header">
+                        <div class="avatar-mini">😎</div>
+                        <div class="user-info">
+                            <div class="username">${escapeHtml(weibo.nickname || '大帅哥')}</div>
+                            <div class="timeago">${timeText}</div>
+                        </div>
+                        <button class="delete-btn" data-id="${weibo.id}" title="删除微博">🗑️</button>
+                    </div>
+                    <div class="weibo-content">${formatContent(contentText)}</div>
+                    <div class="weibo-stats">
+                        <span>❤️ 0</span>
+                        <span>💬 0</span>
+                        <span>🔄 0</span>
+                    </div>
+                </div>
+            `;
+        }
+        timelineContainer.innerHTML = html;
+
+        // 绑定删除按钮事件 (动态绑定)
+        const deleteBtns = document.querySelectorAll('.delete-btn');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idStr = btn.getAttribute('data-id');
+                if (idStr) {
+                    const id = parseInt(idStr, 10);
+                    deleteWeiboById(id);
+                }
+            });
+        });
+    }
+
+    // 辅助: 简单转义防止XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // 让内容中的换行转为br
+    function formatContent(text) {
+        if (!text) return '';
+        return text.replace(/\n/g, '<br>');
+    }
+
+    // 根据id删除微博
+    function deleteWeiboById(id) {
+        const newList = weiboList.filter(item => item.id !== id);
+        if (newList.length === weiboList.length) return;
+        weiboList = newList;
+        saveToLocal();
+        renderTimeline();
+        // 更新计数自动完成
+    }
+
+    // 清空所有微博
+    function clearAllWeibo() {
+        if (weiboList.length === 0) return;
+        if (confirm('⚠️ 确定要清空全部微博吗？此操作不可撤销。')) {
+            weiboList = [];
+            saveToLocal();
+            renderTimeline();
+        }
+    }
+
+    // 发布新微博
+    function publishWeibo() {
+        let content = weiboInput.value.trim();
+        if (content === '') {
+            // 简单提示
+            alert('写点内容再发布吧～ 不能发空微博');
+            return;
+        }
+        if (content.length > 280) {
+            alert('微博内容不能超过280字哦');
+            return;
+        }
+        // 创建新微博对象
+        const newWeibo = {
+            id: Date.now(),
+            content: content,
+            timestamp: Date.now(),
+            nickname: '大帅哥'   // 个人简易版微博，博主统一为“大帅哥”，符合个人身份
+        };
+        weiboList.unshift(newWeibo);   // 最新添加在数组最前面
+        saveToLocal();
+        // 清空输入框
+        weiboInput.value = '';
+        updateCharCount();
+        renderTimeline();
+        // 滚动到顶部动画效果，让新微博可见
+        const timelineDiv = document.querySelector('.timeline');
+        if (timelineDiv) timelineDiv.scrollTop = 0;
+    }
+
+    // 更新字符计数
+    function updateCharCount() {
+        const len = weiboInput.value.length;
+        charCountSpan.innerText = len;
+        if (len > 280) {
+            charCountSpan.style.color = "#e6552e";
+        } else {
+            charCountSpan.style.color = "#b59570";
+        }
+    }
+
+    // 绑定输入事件
+    function bindEvents() {
+        publishBtn.addEventListener('click', publishWeibo);
+        clearAllBtn.addEventListener('click', clearAllWeibo);
+        weiboInput.addEventListener('input', () => {
+            updateCharCount();
+            // 限制长度
+            if (weiboInput.value.length > 280) {
+                weiboInput.value = weiboInput.value.slice(0, 280);
+                updateCharCount();
+            }
+        });
+        // 按Ctrl+Enter 快速发布 (提升体验)
+        weiboInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                publishWeibo();
+            }
+        });
+    }
+
+    // 初始化加载
+    function init() {
+        loadFromLocal();
+        bindEvents();
+        updateCharCount();
+        // 如果没有任何微博且我们范例被清空后，确保友好提示
+        // 额外处理一下对于第一次使用可能范例展示，但是范例已经内置在loadFromLocal里了
+    }
+
+    init();
+    </script>
+</body>
+</html>
